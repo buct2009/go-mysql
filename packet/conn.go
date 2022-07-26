@@ -65,10 +65,10 @@ func NewConn(conn net.Conn) *Conn {
 	c.Conn = conn
 
 	c.bufPool = NewBufPool()
-	c.br = bufio.NewReaderSize(c, 65536) // 64kb
+	c.br = bufio.NewReaderSize(c, 16*1024*1024) // 64kb
 	c.reader = c.br
 
-	c.copyNBuf = make([]byte, 16*1024)
+	c.copyNBuf = make([]byte, 16*1024*1024)
 
 	return c
 }
