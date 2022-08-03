@@ -56,7 +56,7 @@ func getNetProto(addr string) string {
 func Connect(addr string, user string, password string, dbName string, options ...func(*Conn)) (*Conn, error) {
 	proto := getNetProto(addr)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
 
 	dialer := &net.Dialer{}
