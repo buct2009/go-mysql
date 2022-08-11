@@ -249,7 +249,7 @@ func (p *BinlogParser) parseEvent(h *EventHeader, data []byte, rawData []byte) (
 				te := &TableMapEvent{
 					flavor: p.flavor,
 				}
-				if p.format.EventTypeHeaderLengths[TABLE_MAP_EVENT-1] == 6 {
+				if p.format != nil && p.format.EventTypeHeaderLengths[TABLE_MAP_EVENT-1] == 6 {
 					te.tableIDSize = 4
 				} else {
 					te.tableIDSize = 6
