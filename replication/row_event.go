@@ -249,6 +249,10 @@ func (e *TableMapEvent) decodeOptionalMeta(data []byte) (err error) {
 		l, _, n := LengthEncodedInt(data[pos:])
 		pos += n
 
+		if pos > len(data) {
+			return io.EOF
+		}
+
 		v := data[pos : pos+int(l)]
 		pos += int(l)
 
