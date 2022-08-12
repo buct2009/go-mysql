@@ -7,12 +7,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/pingcap/errors"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
+
+	_ "net/http/pprof"
 )
 
 var host = flag.String("host", "127.0.0.1", "MySQL host")
@@ -31,11 +34,19 @@ var backupPath = flag.String("backup_path", "", "backup path to store binlog fil
 
 var rawMode = flag.Bool("raw", false, "Use raw mode")
 
+var serverId = flag.Int("server_id", 101, "Use raw mode")
+
 func main() {
+
+	// 性能分析
+	go func() {
+		fmt.Println(http.ListenAndServe(":1234", nil))
+	}()
+
 	flag.Parse()
 
 	cfg := replication.BinlogSyncerConfig{
-		ServerID: 101,
+		ServerID: uint32(*serverId),
 		Flavor:   *flavor,
 
 		Host:            *host,
@@ -92,8 +103,7 @@ func main() {
 				fmt.Printf("Get event error: %v\n", errors.ErrorStack(err))
 				return
 			}
-
-			e.Dump(os.Stdout)
+			_ = e.Header
 		}
 	}
 }

@@ -660,8 +660,6 @@ func (b *BinlogSyncer) onStream(s *BinlogStreamer) {
 
 	for {
 		data, err := b.c.ReadPacket()
-		continue
-		continue
 		select {
 		case <-b.ctx.Done():
 			s.close()
