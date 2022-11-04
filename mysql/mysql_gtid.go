@@ -59,6 +59,14 @@ func (i Interval) String() string {
 	}
 }
 
+func (i Interval) StringFormat() string {
+	if i.Stop == i.Start+1 {
+		return strconv.FormatInt(i.Start, 10)
+	} else {
+		return strconv.FormatInt(i.Start, 10) + "-" + strconv.FormatInt(i.Stop-1, 10)
+	}
+}
+
 type IntervalSlice []Interval
 
 func (s IntervalSlice) Len() int {
@@ -222,6 +230,19 @@ func (s *UUIDSet) Bytes() []byte {
 	return buf.Bytes()
 }
 
+func (s *UUIDSet) UUIDBytes() []byte {
+	byteArray := make([]byte, 64)
+	buf := bytes.NewBuffer(byteArray)
+	buf.WriteString(s.SID.String())
+
+	for _, i := range s.Intervals {
+		buf.WriteString(":")
+		buf.WriteString(i.StringFormat())
+	}
+
+	return buf.Bytes()
+}
+
 func (s *UUIDSet) AddInterval(in IntervalSlice) {
 	s.Intervals = append(s.Intervals, in...)
 	s.Intervals = s.Intervals.Normalize()
@@ -229,6 +250,10 @@ func (s *UUIDSet) AddInterval(in IntervalSlice) {
 
 func (s *UUIDSet) String() string {
 	return hack.String(s.Bytes())
+}
+
+func (s *UUIDSet) UUIDString() string {
+	return hack.String(s.UUIDBytes())
 }
 
 func (s *UUIDSet) encode(w io.Writer) {
@@ -373,6 +398,13 @@ func (s *MysqlGTIDSet) Update(GTIDStr string) error {
 	return nil
 }
 
+func (s *MysqlGTIDSet) UpdateUUIDSet(GTID *UUIDSet) {
+	if GTID == nil {
+		return
+	}
+	s.AddSet(GTID)
+}
+
 func (s *MysqlGTIDSet) Contain(o GTIDSet) bool {
 	sub, ok := o.(*MysqlGTIDSet)
 	if !ok {
@@ -430,6 +462,35 @@ func (s *MysqlGTIDSet) String() string {
 	sets := make([]string, 0, len(s.Sets))
 	for _, set := range s.Sets {
 		sets = append(sets, set.String())
+	}
+	sort.Strings(sets)
+
+	sep := ""
+	for _, set := range sets {
+		buf.WriteString(sep)
+		buf.WriteString(set)
+		sep = ","
+	}
+
+	return hack.String(buf.Bytes())
+}
+
+func (s *MysqlGTIDSet) GTIDString() string {
+	// there is only one element in gtid set
+	if len(s.Sets) == 1 {
+		for _, set := range s.Sets {
+			return set.UUIDString()
+		}
+	}
+
+	// sort multi set
+
+	byteArray := make([]byte, 128)
+	buf := bytes.NewBuffer(byteArray)
+
+	sets := make([]string, 0, len(s.Sets))
+	for _, set := range s.Sets {
+		sets = append(sets, set.UUIDString())
 	}
 	sort.Strings(sets)
 
