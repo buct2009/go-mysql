@@ -231,7 +231,7 @@ func (s *UUIDSet) Bytes() []byte {
 }
 
 func (s *UUIDSet) UUIDBytes() []byte {
-	byteArray := make([]byte, 64)
+	byteArray := make([]byte, 0, 64)
 	buf := bytes.NewBuffer(byteArray)
 	buf.WriteString(s.SID.String())
 
@@ -485,7 +485,7 @@ func (s *MysqlGTIDSet) GTIDString() string {
 
 	// sort multi set
 
-	byteArray := make([]byte, 128)
+	byteArray := make([]byte, 0, 128)
 	buf := bytes.NewBuffer(byteArray)
 
 	sets := make([]string, 0, len(s.Sets))
