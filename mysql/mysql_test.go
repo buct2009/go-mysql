@@ -41,6 +41,13 @@ func (t *mysqlTestSuite) TestMysqlGTIDInterval(c *check.C) {
 	c.Assert(err, check.IsNil)
 }
 
+func (t *mysqlTestSuite) TestMysqlUUIDInterval(c *check.C) {
+	i := IntervalSlice{Interval{1, 5}, Interval{6, 7}, Interval{7, 10}}
+	i = i.Subtract(Interval{2, 4})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{1, 2}, Interval{4, 5}, Interval{6, 7}, Interval{7, 10}})
+
+}
+
 func (t *mysqlTestSuite) TestMysqlGTIDIntervalSlice(c *check.C) {
 	i := IntervalSlice{Interval{1, 2}, Interval{2, 4}, Interval{2, 3}}
 	i.Sort()
