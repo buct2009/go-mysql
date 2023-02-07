@@ -118,6 +118,40 @@ func (s IntervalSlice) Normalize() IntervalSlice {
 	return n
 }
 
+func (s IntervalSlice) Subtract(sub Interval) IntervalSlice {
+	var n IntervalSlice
+	if len(s) == 0 {
+		return s
+	}
+
+	if sub.Start == sub.Stop {
+		return s
+	}
+
+	for i := 0; i < len(s); i++ {
+		if s[i].Start >= sub.Stop || s[i].Stop <= sub.Start {
+			n = append(n, s[i])
+		} else if s[i].Stop <= sub.Stop && s[i].Start >= sub.Start {
+			//skip this
+		} else {
+			if s[i].Start < sub.Start {
+				n = append(n, Interval{
+					Start: s[i].Start,
+					Stop:  sub.Start,
+				})
+			}
+			if s[i].Stop > sub.Stop {
+				n = append(n, Interval{
+					Start: sub.Stop,
+					Stop:  s[i].Stop,
+				})
+			}
+		}
+	}
+
+	return n
+}
+
 // Contain returns true if sub in s
 func (s IntervalSlice) Contain(sub IntervalSlice) bool {
 	j := 0
@@ -246,6 +280,17 @@ func (s *UUIDSet) UUIDBytes() []byte {
 func (s *UUIDSet) AddInterval(in IntervalSlice) {
 	s.Intervals = append(s.Intervals, in...)
 	s.Intervals = s.Intervals.Normalize()
+}
+
+func (s *UUIDSet) SubtractUUID(uuid *UUIDSet) *UUIDSet {
+	if !bytes.Equal(s.SID.Bytes(), uuid.SID.Bytes()) {
+		return s
+	}
+
+	for _, interval := range uuid.Intervals {
+		s.Intervals = s.Intervals.Subtract(interval)
+	}
+	return s
 }
 
 func (s *UUIDSet) String() string {
@@ -384,6 +429,20 @@ func (s *MysqlGTIDSet) AddSet(set *UUIDSet) {
 		o.AddInterval(set.Intervals)
 	} else {
 		s.Sets[sid] = set
+	}
+}
+
+func (s *MysqlGTIDSet) SubtractSet(set *UUIDSet) {
+	if set == nil {
+		return
+	}
+	sid := set.SID.String()
+	o, ok := s.Sets[sid]
+	if ok {
+		newUUID := o.SubtractUUID(set)
+		if len(newUUID.Intervals) == 0 {
+			delete(s.Sets, sid)
+		}
 	}
 }
 
