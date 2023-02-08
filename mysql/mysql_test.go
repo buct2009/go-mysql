@@ -42,10 +42,38 @@ func (t *mysqlTestSuite) TestMysqlGTIDInterval(c *check.C) {
 }
 
 func (t *mysqlTestSuite) TestMysqlUUIDInterval(c *check.C) {
-	i := IntervalSlice{Interval{1, 5}, Interval{6, 7}, Interval{7, 10}}
-	i = i.Subtract(Interval{2, 4})
-	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{1, 2}, Interval{4, 5}, Interval{6, 7}, Interval{7, 10}})
+	i := IntervalSlice{Interval{3, 7}, Interval{9, 12}}
+	i = i.Subtract(Interval{5, 10})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{3, 5}, Interval{10, 12}})
 
+	i = IntervalSlice{Interval{1, 5}}
+	i = i.Subtract(Interval{2, 4})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{1, 2}, Interval{4, 5}})
+
+	i = IntervalSlice{Interval{1, 5}}
+	i = i.Subtract(Interval{3, 5})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{1, 3}})
+
+	i = IntervalSlice{Interval{1, 5}}
+	i = i.Subtract(Interval{1, 4})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{4, 5}})
+
+	var empty IntervalSlice
+	i = IntervalSlice{Interval{1, 5}}
+	i = i.Subtract(Interval{1, 5})
+	c.Assert(i, check.DeepEquals, empty)
+
+	i = IntervalSlice{Interval{1, 5}}
+	i = i.Subtract(Interval{0, 6})
+	c.Assert(i, check.DeepEquals, empty)
+
+	i = IntervalSlice{Interval{1, 5}}
+	i = i.Subtract(Interval{5, 7})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{1, 5}})
+
+	i = IntervalSlice{Interval{3, 5}}
+	i = i.Subtract(Interval{0, 3})
+	c.Assert(i, check.DeepEquals, IntervalSlice{Interval{3, 5}})
 }
 
 func (t *mysqlTestSuite) TestMysqlGTIDIntervalSlice(c *check.C) {
