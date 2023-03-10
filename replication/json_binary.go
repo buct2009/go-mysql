@@ -1,8 +1,8 @@
 package replication
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/go-mysql-org/go-mysql/utils/json"
 	"math"
 
 	. "github.com/go-mysql-org/go-mysql/mysql"
