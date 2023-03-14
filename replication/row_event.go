@@ -34,7 +34,7 @@ type TableMapEvent struct {
 	ColumnType  []byte
 	ColumnMeta  []uint16
 
-	//len = (ColumnCount + 7) / 8
+	// len = (ColumnCount + 7) / 8
 	NullBitmap []byte
 
 	/*
@@ -98,7 +98,7 @@ func (e *TableMapEvent) Decode(data []byte) error {
 	e.Schema = data[pos : pos+int(schemaLength)]
 	pos += int(schemaLength)
 
-	//skip 0x00
+	// skip 0x00
 	pos++
 
 	tableLength := data[pos]
@@ -107,7 +107,7 @@ func (e *TableMapEvent) Decode(data []byte) error {
 	e.Table = data[pos : pos+int(tableLength)]
 	pos += int(tableLength)
 
-	//skip 0x00
+	// skip 0x00
 	pos++
 
 	var n int
@@ -197,13 +197,13 @@ func (e *TableMapEvent) decodeMeta(data []byte) error {
 	for i, t := range e.ColumnType {
 		switch t {
 		case MYSQL_TYPE_STRING:
-			var x uint16 = uint16(data[pos]) << 8 //real type
-			x += uint16(data[pos+1])              //pack or field length
+			var x uint16 = uint16(data[pos]) << 8 // real type
+			x += uint16(data[pos+1])              // pack or field length
 			e.ColumnMeta[i] = x
 			pos += 2
 		case MYSQL_TYPE_NEWDECIMAL:
-			var x uint16 = uint16(data[pos]) << 8 //precision
-			x += uint16(data[pos+1])              //decimals
+			var x uint16 = uint16(data[pos]) << 8 // precision
+			x += uint16(data[pos+1])              // decimals
 			e.ColumnMeta[i] = x
 			pos += 2
 		case MYSQL_TYPE_VAR_STRING,
@@ -816,7 +816,7 @@ func (e *TableMapEvent) IsEnumOrSetColumn(i int) bool {
 const RowsEventStmtEndFlag = 0x01
 
 type RowsEvent struct {
-	//0, 1, 2
+	// 0, 1, 2
 	Version int
 
 	tableIDSize int
@@ -829,10 +829,10 @@ type RowsEvent struct {
 
 	Flags uint16
 
-	//if version == 2
+	// if version == 2
 	ExtraData []byte
 
-	//lenenc_int
+	// lenenc_int
 	ColumnCount uint64
 
 	/*
@@ -844,14 +844,14 @@ type RowsEvent struct {
 		ColumnBitmap1, ColumnBitmap2 and SkippedColumns are not set on the full row image.
 	*/
 
-	//len = (ColumnCount + 7) / 8
+	// len = (ColumnCount + 7) / 8
 	ColumnBitmap1 []byte
 
-	//if UPDATE_ROWS_EVENTv1 or v2
-	//len = (ColumnCount + 7) / 8
+	// if UPDATE_ROWS_EVENTv1 or v2
+	// len = (ColumnCount + 7) / 8
 	ColumnBitmap2 []byte
 
-	//rows: invalid: int64, float64, bool, []byte, string
+	// rows: invalid: int64, float64, bool, []byte, string
 	Rows           [][]interface{}
 	SkippedColumns [][]int
 
@@ -1057,7 +1057,7 @@ func (e *RowsEvent) decodeValue(data []byte, tp byte, meta uint16) (v interface{
 		nbits := ((meta >> 8) * 8) + (meta & 0xFF)
 		n = int(nbits+7) / 8
 
-		//use int64 for bit
+		// use int64 for bit
 		v, err = decodeBit(data, int(nbits), n)
 	case MYSQL_TYPE_TIMESTAMP:
 		n = 4
@@ -1082,23 +1082,11 @@ func (e *RowsEvent) decodeValue(data []byte, tp byte, meta uint16) (v interface{
 		} else {
 			d := i64 / 1000000
 			t := i64 % 1000000
-			v = e.parseFracTime(fracTime{
-				Time: time.Date(
-					int(d/10000),
-					time.Month((d%10000)/100),
-					int(d%100),
-					int(t/10000),
-					int((t%10000)/100),
-					int(t%100),
-					0,
-					time.UTC,
-				),
-				Dec: 0,
-			})
+			v = fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d",
+				int(d/10000), (d%10000)/100, int(d%100), int(t/10000), int((t%10000)/100), int(t%100))
 		}
 	case MYSQL_TYPE_DATETIME2:
 		v, n, err = decodeDatetime2(data, meta)
-		v = e.parseFracTime(v)
 	case MYSQL_TYPE_TIME:
 		n = 3
 		i32 := uint32(FixedLengthInt(data[0:3]))
@@ -1214,7 +1202,7 @@ func decodeDecimalDecompressValue(compIndx int, data []byte, mask uint8) (size i
 var zeros = [digitsPerInteger]byte{48, 48, 48, 48, 48, 48, 48, 48, 48}
 
 func decodeDecimal(data []byte, precision int, decimals int, useDecimal bool) (interface{}, int, error) {
-	//see python mysql replication and https://github.com/jeremycole/mysql_binlog
+	// see python mysql replication and https://github.com/jeremycole/mysql_binlog
 	integral := precision - decimals
 	uncompIntegral := integral / digitsPerInteger
 	uncompFractional := decimals / digitsPerInteger
@@ -1227,7 +1215,7 @@ func decodeDecimal(data []byte, precision int, decimals int, useDecimal bool) (i
 	buf := make([]byte, binSize)
 	copy(buf, data[:binSize])
 
-	//must copy the data for later change
+	// must copy the data for later change
 	data = buf
 
 	// Support negative
@@ -1242,7 +1230,7 @@ func decodeDecimal(data []byte, precision int, decimals int, useDecimal bool) (i
 		res.WriteString("-")
 	}
 
-	//clear sign
+	// clear sign
 	data[0] ^= 0x80
 
 	zeroLeading := true
@@ -1367,7 +1355,7 @@ func littleDecodeBit(data []byte, nbits int, length int) (value int64, err error
 }
 
 func decodeTimestamp2(data []byte, dec uint16, timestampStringLocation *time.Location) (interface{}, int, error) {
-	//get timestamp binary length
+	// get timestamp binary length
 	n := int(4 + (dec+1)/2)
 	sec := int64(binary.BigEndian.Uint32(data[0:4]))
 	usec := int64(0)
@@ -1394,7 +1382,7 @@ func decodeTimestamp2(data []byte, dec uint16, timestampStringLocation *time.Loc
 const DATETIMEF_INT_OFS int64 = 0x8000000000
 
 func decodeDatetime2(data []byte, dec uint16) (interface{}, int, error) {
-	//get datetime binary length
+	// get datetime binary length
 	n := int(5 + (dec+1)/2)
 
 	intPart := int64(BFixedLengthInt(data[0:5])) - DATETIMEF_INT_OFS
@@ -1414,7 +1402,7 @@ func decodeDatetime2(data []byte, dec uint16) (interface{}, int, error) {
 	}
 
 	tmp := intPart<<24 + frac
-	//handle sign???
+	// handle sign???
 	if tmp < 0 {
 		tmp = -tmp
 	}
@@ -1447,17 +1435,20 @@ func decodeDatetime2(data []byte, dec uint16) (interface{}, int, error) {
 		return formatBeforeUnixZeroTime(year, month, day, hour, minute, second, int(frac), int(dec)), n, nil
 	}
 
-	return fracTime{
-		Time: time.Date(year, time.Month(month), day, hour, minute, second, int(frac*1000), time.UTC),
-		Dec:  int(dec),
-	}, n, nil
+	var datetimeVal string
+	if frac > 0 {
+		datetimeVal = fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%06d", year, month, day, hour, minute, second, frac)
+	} else {
+		datetimeVal = fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+	}
+	return datetimeVal, n, nil
 }
 
 const TIMEF_OFS int64 = 0x800000000000
 const TIMEF_INT_OFS int64 = 0x800000
 
 func decodeTime2(data []byte, dec uint16) (string, int, error) {
-	//time  binary length
+	// time  binary length
 	n := int(3 + (dec+1)/2)
 
 	tmp := int64(0)
@@ -1589,7 +1580,7 @@ type RowsQueryEvent struct {
 }
 
 func (e *RowsQueryEvent) Decode(data []byte) error {
-	//ignore length byte 1
+	// ignore length byte 1
 	e.Query = data[1:]
 	return nil
 }
