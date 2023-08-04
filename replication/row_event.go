@@ -1435,13 +1435,11 @@ func decodeDatetime2(data []byte, dec uint16) (interface{}, int, error) {
 		return formatBeforeUnixZeroTime(year, month, day, hour, minute, second, int(frac), int(dec)), n, nil
 	}
 
-	var datetimeVal string
-	if frac > 0 {
-		datetimeVal = fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%06d", year, month, day, hour, minute, second, frac)
-	} else {
-		datetimeVal = fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+	dateTime := fracTime{
+		Time: time.Date(year, time.Month(month), day, hour, minute, second, int(frac*1000), time.UTC),
+		Dec:  int(dec),
 	}
-	return datetimeVal, n, nil
+	return dateTime.String(), n, nil
 }
 
 const TIMEF_OFS int64 = 0x800000000000
